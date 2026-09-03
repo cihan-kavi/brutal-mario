@@ -56,19 +56,6 @@
   }
   #msg button:hover { background: #ff4444; }
   .controls { margin-top: 8px; font-size: 11px; color: #888; }
-  #cheats {
-    display: flex; align-items: center; gap: 6px;
-    margin-top: 6px; font-size: 11px;
-  }
-  #cheats .tag { color: #ffd700; letter-spacing: 1px; }
-  #cheats button, #cheats select {
-    background: #222; color: #ddd; border: 1px solid #555;
-    font-family: inherit; font-size: 11px; padding: 3px 8px; cursor: pointer;
-  }
-  #cheats button:hover, #cheats select:hover { background: #333; color: #fff; }
-  #cheats button.on { background: #e52521; border-color: #ff6b6b; color: #fff; }
-  #cheats .hint { color: #666; margin-left: 4px; }
-
   /* --- Telefon --- Ekran küçükse oyun ekrana sığdırılır, kontroller
      tuvalin üstüne biner ve klavye yazıları gizlenir. */
   #touch, #rotate { display: none; }
@@ -106,9 +93,6 @@
     h1 { font-size: 13px; margin-bottom: 2px; }
     #hud { gap: 16px; font-size: 12px; margin-bottom: 4px; }
     .controls { display: none; }
-    #cheats .hint { display: none; }
-    #cheats { margin-top: 4px; flex-wrap: wrap; justify-content: center; max-width: 100vw; }
-    #cheats select { max-width: 42vw; }
     canvas {
       border-width: 2px;
       aspect-ratio: 800 / 480;
@@ -117,16 +101,14 @@
       height: auto;
     }
   }
-  /* Yan çevrilmiş telefonda yükseklik değerli: başlık gider, üst bar tuvalin
-     boş göğüne biner, tuval kalan yüksekliği tamamen kaplar. */
+  /* Yan çevrilmiş telefonda yükseklik değerli: başlık gider, can/bölüm satırı
+     tuvalin boş göğüne biner, tuval kalan yüksekliği tamamen kaplar. */
   @media (orientation: landscape) and (max-height: 500px) {
     body.touch h1 { display: none; }
     body.touch #hud {
       position: fixed; top: 4px; left: 10px; margin: 0;
       gap: 12px; font-size: 11px; z-index: 22;
     }
-    body.touch #cheats { position: fixed; top: 2px; right: 10px; margin: 0; z-index: 22; }
-    body.touch #cheats select { max-width: 34vw; }
     body.touch canvas {
       width: auto; height: calc(100dvh - 8px); max-width: calc(100vw - 6px);
     }
@@ -148,15 +130,6 @@
 </div>
 <canvas id="game" width="800" height="480"></canvas>
 <p class="controls">← → yürü &nbsp;|&nbsp; ↑ / BOŞLUK zıpla &nbsp;|&nbsp; R bölümü baştan başlat</p>
-<div id="cheats">
-  <span class="tag">HİLE</span>
-  <button id="prevLv" tabindex="-1">◀</button>
-  <select id="lvSelect" tabindex="-1"></select>
-  <button id="nextLv" tabindex="-1">▶</button>
-  <button id="godBtn" tabindex="-1">ÖLÜMSÜZ</button>
-  <button id="flyBtn" tabindex="-1">UÇUŞ</button>
-  <span class="hint">1-8 bölüm &nbsp;|&nbsp; G ölümsüz &nbsp;|&nbsp; F uçuş (uçarken ↑↓ ile de gez)</span>
-</div>
 <div id="msg"><h2 id="msgTitle"></h2><p id="msgText"></p><button id="msgBtn">BAŞLA</button></div>
 <div id="rotate">↻ Telefonu yan çevir</div>
 <div id="touch">
@@ -487,7 +460,6 @@ function loadLevel(idx) {
   player.riding = null;
   player.invincible = 60;
   document.getElementById('level').textContent = idx + 1;
-  syncCheats();
 }
 
 function tileAt(tx, ty) {
@@ -1235,10 +1207,10 @@ function jumpToLevel(idx) {
   showBanner(LEVELS[levelIdx].name, 'hile: bölüm atlandı', 70);
 }
 
+// Panelden çıkarıldı, klavye kısayolu olarak duruyor: G ölümsüzlük, F uçuş.
 function toggleGod() {
   godMode = !godMode;
   if (godMode) player.dead = false;
-  syncCheats();
 }
 
 function toggleFly() {
@@ -1247,33 +1219,6 @@ function toggleFly() {
     player.dead = false;
     player.vy = 0;
   }
-  syncCheats();
-}
-
-function syncCheats() {
-  const god = document.getElementById('godBtn');
-  const fly = document.getElementById('flyBtn');
-  god.className = godMode ? 'on' : '';
-  fly.className = flyMode ? 'on' : '';
-  god.textContent = godMode ? 'ÖLÜMSÜZ: AÇIK' : 'ÖLÜMSÜZ';
-  fly.textContent = flyMode ? 'UÇUŞ: AÇIK' : 'UÇUŞ';
-  document.getElementById('lvSelect').value = String(levelIdx);
-}
-
-function wireCheats() {
-  document.getElementById('lvSelect').innerHTML =
-    LEVELS.map((lv, i) => `<option value="${i}">${lv.name}</option>`).join('');
-  const click = (id, fn) => {
-    const el = document.getElementById(id);
-    el.onclick = () => { fn(); el.blur(); };
-  };
-  click('prevLv', () => jumpToLevel(levelIdx - 1));
-  click('nextLv', () => jumpToLevel(levelIdx + 1));
-  click('godBtn', toggleGod);
-  click('flyBtn', toggleFly);
-  const select = document.getElementById('lvSelect');
-  select.onchange = () => { jumpToLevel(Number(select.value)); select.blur(); };
-  syncCheats();
 }
 
 // Telefonda klavye yok, o yüzden ekrandaki düğmeler doğrudan aynı tuşları
@@ -1323,7 +1268,6 @@ function wireTouch() {
 
 const params = new URLSearchParams(location.search);
 levelIdx = Math.min(Math.max(parseInt(params.get('level') || '1', 10) - 1, 0), LEVELS.length - 1);
-wireCheats();
 wireTouch();
 
 if (params.has('skipintro')) {

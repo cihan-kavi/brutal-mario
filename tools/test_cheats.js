@@ -1,6 +1,7 @@
 /**
- * Checks the cheat panel: level jumping stays in range, god mode survives a
- * lethal hit, and fly mode roams through solid stone without dying.
+ * Checks the cheats, which are keyboard-only now that the panel is gone:
+ * level jumping stays in range, god mode survives a lethal hit, and fly mode
+ * roams through solid stone without dying.
  */
 const fs = require('fs');
 const path = require('path');
@@ -44,13 +45,7 @@ const run = new Function(`${source}\nreturn { startGame, gameLoop, jumpToLevel, 
 const game = run();
 game.startGame();
 
-// The picker lists every level and jumping clamps to the real range.
-assert.strictEqual(
-  elements.lvSelect.innerHTML.match(/<option/g).length,
-  game.LEVELS.length,
-  'level picker should list every level',
-);
-
+// Jumping between levels clamps to the real range.
 game.jumpToLevel(4);
 assert.strictEqual(game.levelIdx, 4);
 assert.strictEqual(elements.level.textContent, 5, 'HUD should follow the jump');
@@ -112,4 +107,4 @@ const fallStart = game.player.y;
 for (let f = 0; f < 5; f++) game.gameLoop();
 assert.ok(game.player.y > fallStart, 'gravity should resume once fly mode is off');
 
-console.log('cheats OK: level picker clamps, god mode blocks death, fly mode passes through stone');
+console.log('cheats OK: level jumps clamp, god mode blocks death, fly mode passes through stone');
